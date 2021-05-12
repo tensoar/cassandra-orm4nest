@@ -1,0 +1,17 @@
+{
+  "name": "cassandra-orm4nest",
+  "version": "1.0.0",
+  "description": "orm wrapper for cassandra-driver",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cassandra",
+    "orm",
+    "\"cassandra",
+    "driver\""
+  ],
+  "author": "tensoar",
+  "license": "MIT"
+}
