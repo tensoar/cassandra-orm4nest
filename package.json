@@ -13,5 +13,14 @@
     "driver\""
   ],
   "author": "tensoar",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "@nestjs/common": "^7.6.15",
+    "@nestjs/core": "^7.6.15",
+    "cassandra-driver": "^4.6.2",
+    "reflect-metadata": "^0.1.13"
+  }
 }
