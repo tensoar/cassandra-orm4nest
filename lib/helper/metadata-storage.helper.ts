@@ -1,6 +1,6 @@
 // metadata-storage.helper.ts
 
-interface ColumnMetadataOptions {
+export interface ColumnMetadataOptions {
     dbName: string, // 字段在数据库中的名称
     propertyName: string  // 对应到实体的属性名
 }
