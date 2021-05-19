@@ -10,8 +10,8 @@ import DeviceService from "./device.service";
 @Module({
     imports: [
         CassandraOrmModule.forRoot({
-            contactPoints: ['192.168.18.222'],
-            authProvider: new auth.PlainTextAuthProvider('iot', 'iotdev'),
+            contactPoints: ['localhost'],
+            authProvider: new auth.PlainTextAuthProvider('username', 'password'),
             localDataCenter: 'datacenter1'
         }),
         CassandraOrmModule.forFeature([
