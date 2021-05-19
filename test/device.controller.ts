@@ -1,5 +1,5 @@
 // device.controller.ts
-import { Controller, Get, Req } from "@nestjs/common";
+import { Controller, Get } from "@nestjs/common";
 import { mapping } from 'cassandra-driver';
 import { assert } from "console";
 

@@ -1,4 +1,4 @@
-// table.decorator.ts
+// entity.decorator.ts
 interface TableDecoratorOptions {
     keyspace: string, // 所属命名空间
     table: string // 所属数据库

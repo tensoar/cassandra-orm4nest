@@ -2,7 +2,7 @@
 import { Module } from "@nestjs/common";
 import { auth } from "cassandra-driver";
 
-import CassandraOrmModule from "../lib/module/cassandra-orm.module";
+import { CassandraOrmModule } from "../lib";
 import DeviceController from "./device.controller";
 import Device from "./device.entity";
 import DeviceService from "./device.service";

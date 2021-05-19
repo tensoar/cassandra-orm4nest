@@ -2,9 +2,7 @@
 import { Injectable } from "@nestjs/common";
 import { Client } from "cassandra-driver";
 
-import InjectClient from "../lib/decorator/inject-client.decorator";
-import InjectMapper from "../lib/decorator/Inject-mapper.decorator";
-import BaseService from "../lib/curd/base-service.curd";
+import { InjectClient, InjectMapper, BaseService } from "../lib";
 import Device from "./device.entity";
 
 @Injectable()

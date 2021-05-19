@@ -1,6 +1,5 @@
-// user.entity.ts
-import Column from "../lib/decorator/column.decorator";
-import Entity from "../lib/decorator/table.decorator";
+// device.entity.ts
+import { Column, Entity } from "../lib";
 
 @Entity({
     keyspace: 'wt_test',
