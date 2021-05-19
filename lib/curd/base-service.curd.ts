@@ -2,9 +2,10 @@
 
 import { Client, mapping, QueryOptions, types } from "cassandra-driver";
 // cassandra-driver内部实现的cql语句生成函数,默认没有导出，因此需要完整路径导入
-import { QueryGenerator } from "cassandra-driver/lib/mapping/q"
+import * as QueryGenerator from "cassandra-driver/lib/mapping/query-generator"
+import * as DocInfoAdapter from "cassandra-driver/lib/mapping/doc-info-adapter";
 
-import MetadataStorageHelper, { ColumnMetadataOptions } from "lib/helper/metadata-storage.helper";
+import MetadataStorageHelper, { ColumnMetadataOptions } from "../helper/metadata-storage.helper";
 
 type EntityConditionOptions<T> = {[key in keyof T]?: T[key] | mapping.q.QueryOperator};
 
@@ -12,7 +13,10 @@ type EntityConditionOptions<T> = {[key in keyof T]?: T[key] | mapping.q.QueryOpe
  * 服务基类
  */
 export default class BaseService<T> {
-    private readonly _mapper: mapping.Mapper;
+    // 类型追加_modelMappingInfos是因为在使用cassandra-driver实现的转换函数将实体描述转为原始cql语句时，映射
+    // 信息须作为一个参数传入，映射信息是作为私有属性存在在mapper里的，ts层面无法展现，但运行时由于编译为js，没有私有属性概念，
+    // 可以直接获取，此处也是个妥协。
+    private readonly _mapper: mapping.Mapper & {_modelMappingInfos: Map<string, any>};
     private readonly _client: Client;
     private readonly _Entity: any;
 
@@ -22,7 +26,7 @@ export default class BaseService<T> {
     protected readonly columnMetas: ColumnMetadataOptions[];
     constructor(client:  Client, mapper: mapping.Mapper, Entity: any) {
         this._client = client;
-        this._mapper = mapper;
+        this._mapper = mapper as any;
         this._Entity = Entity;
 
         this.keyspaceName = Reflect.getMetadata('keyspace', Entity) as string;
@@ -78,7 +82,12 @@ export default class BaseService<T> {
     }
 
     async findOne(conditions: EntityConditionOptions<T>, docInfo?: mapping.FindDocInfo, execOptions?: mapping.MappingExecutionOptions) {
-        return this.modelMapper.get(conditions, docInfo, execOptions);
+        const di: mapping.FindDocInfo = docInfo || {limit: 1};
+        if (!di.limit) {
+            di.limit = 1;
+        }
+        const res = await this.modelMapper.find(conditions, di, execOptions);
+        return res.toArray()[0] || null;
     }
 
     private getDbNameOfProperty(propertyName: string) {
@@ -105,8 +114,20 @@ export default class BaseService<T> {
         return result.toArray();
     }
 
+    async updateMany(values: Array<{value: EntityConditionOptions<T>, docInfo?: mapping.UpdateDocInfo}>, execOptions?: mapping.MappingExecutionOptions) {
+        const batches = values.map(v => this.modelMapper.batching.update(v.value, v.docInfo || null));
+        const result = await this._mapper.batch(batches, execOptions);
+        return result.toArray();
+    }
+
     async remove(values: EntityConditionOptions<T>, docInfo?: mapping.UpdateDocInfo, execOptions?: mapping.MappingExecutionOptions) {
         const result = await this.modelMapper.remove(values, docInfo, execOptions);
+        return result.toArray();
+    }
+
+    async removeMany(values: Array<{value:  EntityConditionOptions<T>, docInfo?: mapping.UpdateDocInfo}>, execOptions?: mapping.MappingExecutionOptions) {
+        const batches = values.map(v => this.modelMapper.batching.remove(v.value, v.docInfo || null));
+        const result = await this._mapper.batch(batches, execOptions);
         return result.toArray();
     }
 
@@ -120,7 +141,7 @@ export default class BaseService<T> {
     private findThroughEachRow(cql: string, params: any, options?: QueryOptions): Promise<T[]> {
         return new Promise((resolve, reject) => {
             const results: T[] = [];
-            this._client.eachRow(cql, params, options, (_, row) => {
+            this._client.eachRow(cql, params || null, options, (_, row) => {
                 results.push(this.row2entity(row));
             }, (err, result) => {
                 if (err) {
@@ -137,22 +158,17 @@ export default class BaseService<T> {
     }
     
     /**
-     * 生成查询cql语句与参数，将属性名转为记录名
+     * 根据实体描述生成原始cql查询语句与参数
      * 转化过程采用cassandra-driver内部实现的转换函数
      * @param conditions 查询条件
      * @param docInfo 文档查询配置
      * @returns 
      */
      private makeQueryCqlAndParams(conditions?: EntityConditionOptions<T>, docInfo?: mapping.FindDocInfo): {cql: string, params: any[]} {
-        const propertiesInfo: Array<{columnName: string, value: any}> = [];
+        const mappingInfo = this._mapper._modelMappingInfos.get(this.tableName);
+        let propertiesInfo: Array<{columnName: string, value: any}> = [];
         if (conditions) {
-            for (let key of Object.keys(conditions)) {
-                const dbName = this.getDbNameOfProperty(key);
-                propertiesInfo.push({
-                    columnName: dbName,
-                    value: conditions[key]
-                });
-            }
+            propertiesInfo = DocInfoAdapter.getPropertiesInfo(Object.keys(conditions), docInfo, conditions, mappingInfo);
         }
         const fieldsInfo: string[] = [];
         if (docInfo && docInfo.fields) {
@@ -168,9 +184,12 @@ export default class BaseService<T> {
             }
         }
         const limit = docInfo && docInfo.limit ? docInfo.limit : null;
+        // const p = QueryGenerator.selectParamsGetter(propertiesInfo, limit);
+        // const cql = QueryGenerator.getSelect(this.tableName, this.keyspaceName, propertiesInfo, fieldsInfo, orders, limit);
+        // console.log(p)
         return {
             cql: QueryGenerator.getSelect(this.tableName, this.keyspaceName, propertiesInfo, fieldsInfo, orders, limit),
-            params: QueryGenerator.selectParamsGetter(propertiesInfo, limit)
+            params: QueryGenerator.selectParamsGetter(propertiesInfo, limit)(conditions, docInfo, mappingInfo)
         };
     }
 }

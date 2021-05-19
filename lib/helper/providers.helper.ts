@@ -27,14 +27,30 @@ export function getMapperProviders(Entities: ObjectConstructor[]) {
             // 数据库中列名与实体中列名的对应关系
             const columns: {[key: string]: string} = {};
             for (let meta of columnMetas) {
-                columns[meta.dbName] = meta.propertyName;
+                if (!meta.fromModel && !meta.isJonStr && !meta.toModel) {
+                    columns[meta.dbName] = meta.propertyName;
+                } else {
+                    const colInfo = {
+                        name: meta.propertyName,
+                    }
+                    if (meta.isJonStr) {
+                        colInfo['fromModel'] = JSON.stringify;
+                        colInfo['toModel'] = JSON.parse;
+                    }
+                    if (meta.fromModel) {
+                        colInfo['fromModel'] = meta.fromModel;
+                    }
+                    if (meta.toModel) {
+                        colInfo['toModel'] = meta.toModel;
+                    }
+                }
             }
             const mappingOptions = {
                 models: {
                     [tableName]: {
                         keyspace,
                         tables: [tableName],
-                        columns,
+                        columns, // 映射规则优先于mappings
                         mappings: new mapping.UnderscoreCqlToCamelCaseMappings(),  // 字段映射方式，数据库中下划线的命名方式会映射为对象中的驼峰命名方式
                     }
                 }
