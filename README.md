@@ -63,6 +63,7 @@ export default class DeviceService extends BaseService<Device> { // 继承服务
     ) {
         super(client, mapper, Device); // 父类构造
     }
+}
 ```
 
 ### `controller`层使用
@@ -81,6 +82,7 @@ export default class DeviceController {
     async doSomething() {
         // TODO
     }
+}
 ```
 
 ### `module`定义
