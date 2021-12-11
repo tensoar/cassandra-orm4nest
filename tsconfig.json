@@ -13,12 +13,10 @@
   },
   "include": [
     "lib/**/*",
-    "test/**/*"
+    "test",
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "resource",
-    "out"
   ]
 }

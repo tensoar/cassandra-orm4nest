@@ -10,7 +10,7 @@
 
 ```typescript
 // device.entity.ts
-import { Column, Entity } from "cassandra-orm4nest/lib";
+import { Column, Entity } from "cassandra-orm4nest";
 
 @Entity({
     keyspace: 'test',
@@ -31,7 +31,41 @@ export default class Device {
 }
 ```
 
+
+### `module`定义
+
+与`typeorm`实现类似，提供了`forRoot`方法配置数据库，`forFeature`方法注册实体。`forRoot`参数暴露的`cassandra-driver`连接选项，因而与`cassandra`的`Client`参数一致。
+
+```typescript
+// orm-test.module.ts
+import { Module } from "@nestjs/common";
+import { auth } from "cassandra-driver";
+
+import { CassandraOrmModule } from "cassandra-orm4nest";
+import DeviceController from "device.controller";
+import Device from "device.entity";
+import DeviceService from "device.service";
+
+@Module({
+    imports: [
+        CassandraOrmModule.forRoot({
+            contactPoints: ['localhost'],
+            authProvider: new auth.PlainTextAuthProvider('username', 'password'),
+            localDataCenter: 'datacenter1'
+        }),
+        CassandraOrmModule.forFeature([ // 需要生成mapper的实体
+            Device
+        ])
+    ],
+    controllers: [DeviceController], // controller实现
+    providers: [DeviceService] // service实现
+})
+export default class OrmTestModule {}
+```
+
 ### `service`层定义
+
+在`forFeature`中注册了的实体都会生成相应的`mapper`对象。
 
 * 提供了`@InjectMapper`注解用于注入实体的`mapper`对象，得到的`mapper`对象类型为`cassandra-driver`中`mapping.ModelMapper`对象。
 * 提供了`@InjectClient`注解可直接注入`cassandra`的连接客户端对象，类型为`cassandra`中的`Client`对象。
@@ -52,11 +86,11 @@ export default class Device {
 import { Injectable } from "@nestjs/common";
 import { Client } from "cassandra-driver";
 
-import { InjectClient, InjectMapper, BaseService } from "cassandra-orm4nest/lib";
+import { InjectClient, InjectMapper, BaseService } from "cassandra-orm4nest";
 import Device from "device.entity";
 
 @Injectable()
-export default class DeviceService extends BaseService<Device> { // 继承服务基类
+export default class DeviceService extends BaseService<Device> { // 继承服务基类，服务基类提供了基本的CURD方法
     constructor(
         @InjectMapper(Device) private readonly mapper,
         @InjectClient() client: Client
@@ -85,35 +119,24 @@ export default class DeviceController {
 }
 ```
 
-### `module`定义
+## 运行测试
 
-与`typeorm`实现类似，提供了`forRoot`方法配置数据库，`forFeature`方法注册实体。
+导入`test/schema.cql`至数据库：
 
-```typescript
-// orm-test.module.ts
-import { Module } from "@nestjs/common";
-import { auth } from "cassandra-driver";
+```bash
+cqlsh <host> -u <username> -p <password> < schema.cql
+```
 
-import { CassandraOrmModule } from "cassandra-orm4nest/lib";
-import DeviceController from "device.controller";
-import Device from "device.entity";
-import DeviceService from "device.service";
+启动测试接口：
 
-@Module({
-    imports: [
-        CassandraOrmModule.forRoot({
-            contactPoints: ['localhost'],
-            authProvider: new auth.PlainTextAuthProvider('username', 'password'),
-            localDataCenter: 'datacenter1'
-        }),
-        CassandraOrmModule.forFeature([
-            Device
-        ])
-    ],
-    controllers: [DeviceController],
-    providers: [DeviceService]
-})
-export default class OrmTestModule {}
+```bash
+npm run test
+```
+
+访问连接：
+
+```bash
+http://localhost:30000/device/doSomthing
 ```
 
 > 完整见`test`下示例

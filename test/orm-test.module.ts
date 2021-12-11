@@ -6,13 +6,14 @@ import { CassandraOrmModule } from "../lib";
 import DeviceController from "./device.controller";
 import Device from "./device.entity";
 import DeviceService from "./device.service";
+import env from "./env.util";
 
 @Module({
     imports: [
         CassandraOrmModule.forRoot({
-            contactPoints: ['localhost'],
-            authProvider: new auth.PlainTextAuthProvider('username', 'password'),
-            localDataCenter: 'datacenter1'
+            contactPoints: [...env.host.split(',')],
+            authProvider: new auth.PlainTextAuthProvider(env.username, env.password),
+            localDataCenter: env.datacenter
         }),
         CassandraOrmModule.forFeature([
             Device

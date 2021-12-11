@@ -1,3 +1,4 @@
+CREATE KEYSPACE IF NOT EXISTS wt_test WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1};
 CREATE TABLE wt_test.device (
     serial_number varchar,
     create_time timestamp,

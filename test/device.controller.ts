@@ -28,24 +28,24 @@ export default class DeviceController {
         device2.isOnline = true;
         device2.version = "v1";
 
-        console.log('----------saveMany-----------');
+        console.log('----------< saveMany >-----------');
         await this.deviceService.saveMany([device1, device2]);
 
-        console.log('----------findAll-----------');
+        console.log('----------< findAll >---_--------');
         const allDevices = await this.deviceService.findAll();
-        assert(allDevices.length == 2, 'assert 1');
+        assert(allDevices.length == 2, 'assert saveMany');
 
-        console.log('----------findRealAll-----------');
+        console.log('--------< findRealAll >-----------');
         const allRealDevices = await this.deviceService.findRealAll();
-        assert(allRealDevices.length == 2, 'assert 2');
+        assert(allRealDevices.length == 2, 'assert findRealAll');
 
-        console.log('----------findMany-----------');
+        console.log('---------< findMany >------------');
         const devs1 = await this.deviceService.findMany({serialNumber: 'dev1', createTime: q.lte(device1.createTime)});
-        assert(devs1.length == 1 && devs1[0].serialNumber == 'dev1', 'assert 3');
+        assert(devs1.length == 1 && devs1[0].serialNumber == 'dev1', 'assert findMany');
 
-        console.log('----------findRealMany-----------');
+        console.log('--------< findRealMany >-----------');
         const devs2 = await this.deviceService.findRealMany({serialNumber: 'dev2', createTime: q.gte(device2.createTime)});
-        assert(devs2.length == 1 && devs2[0].serialNumber == 'dev2', 'assert 4');
+        assert(devs2.length == 1 && devs2[0].serialNumber == 'dev2', 'assert findRealMany');
 
         console.log('----------update-----------');
         const dev2 = devs2[0];
@@ -53,7 +53,7 @@ export default class DeviceController {
         dev2.isOnline = !dev2.isOnline;
         await this.deviceService.update(dev2, {fields: ['serialNumber', 'createTime', 'version']});
         const v2New = await this.deviceService.findOne({serialNumber: 'dev2'});
-        assert(v2New.version == 'v2' && v2New.isOnline == true, 'assert 5');
+        assert(v2New.version == 'v2' && v2New.isOnline == true, 'assert update');
 
         const dev1 = devs1[0];
         dev1.isOnline = false;
@@ -62,15 +62,15 @@ export default class DeviceController {
             docInfo: {fields: ['serialNumber', 'createTime', 'isOnline']} 
         }]);
         const dev1New = await this.deviceService.findOne({serialNumber: 'dev1'});
-        assert(dev1New.isOnline == false);
+        assert(dev1New.isOnline == false, 'assert updateMany');
 
-        console.log('----------remove1-----------');
+        console.log('-----------< remove >-------------');
         await this.deviceService.remove({serialNumber: 'dev1', createTime: q.gte(device1.createTime)});
-        assert((await this.deviceService.findAll()).length == 1, 'assert 6');
+        assert((await this.deviceService.findAll()).length == 1, 'assert remove');
 
-        console.log('----------remove2-----------');
+        console.log('---------< removeMany >-----------');
         await this.deviceService.removeMany([{value: {serialNumber: 'dev2', createTime: q.gte(device1.createTime)}}]);
-        assert((await this.deviceService.findAll()).length == 0, 'assert 7');
+        assert((await this.deviceService.findAll()).length == 0, 'assert removeMany');
         return { msg: "all finished ..."};
     }
 }
