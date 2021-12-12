@@ -1,12 +1,28 @@
 # cassandra-orm4nest
 
-`Nest`下`cassandra`的`orm`封装(底层基于`cassandra-driver`)，封装方式参照了`typeorm`。
+Cassandra ORM wrapper for nestjs based on `cassandra-driver` package.
 
-## 使用
+[中文说明](./README_CN.md)
 
-### 实体定义
+## Install
 
-提供了`@Entity`与`@Column`注解定义与表格、字段的映射关系。
+use npm:
+
+```bash
+npm i cassandra-orm4nest --save
+```
+
+use yarn:
+
+```bash
+yarn add cassandra-orm4nest
+```
+
+## Usage
+
+### Entity Definition
+
+use `@Entity` and `@Column` decorator define an entity:
 
 ```typescript
 // device.entity.ts
@@ -31,10 +47,9 @@ export default class Device {
 }
 ```
 
+### Module Definition
 
-### `module`定义
-
-与`typeorm`实现类似，提供了`forRoot`方法配置数据库，`forFeature`方法注册实体。`forRoot`参数暴露的`cassandra-driver`连接选项，因而与`cassandra`的`Client`参数一致。
+Just like typeorm, you can use `forRoot` method to configure the database and use `forFeature` method to register entities:
 
 ```typescript
 // orm-test.module.ts
@@ -48,39 +63,24 @@ import DeviceService from "device.service";
 
 @Module({
     imports: [
-        CassandraOrmModule.forRoot({
+        CassandraOrmModule.forRoot({ // database configuration
             contactPoints: ['localhost'],
             authProvider: new auth.PlainTextAuthProvider('username', 'password'),
             localDataCenter: 'datacenter1'
         }),
-        CassandraOrmModule.forFeature([ // 需要生成mapper的实体
+        CassandraOrmModule.forFeature([ // register entities
             Device
         ])
     ],
-    controllers: [DeviceController], // controller实现
-    providers: [DeviceService] // service实现
+    controllers: [DeviceController], // related controller
+    providers: [DeviceService] // related service
 })
 export default class OrmTestModule {}
 ```
 
-### `service`层定义
+### Service Defination
 
-在`forFeature`中注册了的实体都会生成相应的`mapper`对象。
-
-* 提供了`@InjectMapper`注解用于注入实体的`mapper`对象，得到的`mapper`对象类型为`cassandra-driver`中`mapping.ModelMapper`对象。
-* 提供了`@InjectClient`注解可直接注入`cassandra`的连接客户端对象，类型为`cassandra`中的`Client`对象。
-* 提供了`BaseService`服务基类，可直接被实体的服务类继承，提供了基本的`CURD`方法，包括：
-    - `saveOne`: 保存单个实体
-    - `saveMany`: 保存多个实体
-    - `finadAll`: 查询全表，直接暴露的`ModelMapper`的`findAll`，受`cassandra-driver`默认查询条数的限制，默认只返回前`5000`条。
-    - `findRealAll`: 查询全表，返回全部数据，通过`eachRow`进行查询，不受默认条数限制。
-    - `findMany`: 批量条件查询，与`findAll`情况一致，受默认条数限制。
-    - `findRealMany`: 批量条件查询，与`findRealAll`情况一致，不受默认条数限制。
-    - `findOne`: 条件查询第一条。
-    - `update`: 常规条件更新
-    - `updateMany`: 批量条件更新，一次执行多个条件更新
-    - `remove`: 常规条件移除
-    - `removeMany`: 批量条件删除，一次执行多个条件
+Entities registered in `forFeature` method will generate corresponding mapper objects witch type is mapping.ModelMapper and can be injected by `@InjectMapper` decorator.
 
 ```typescript
 import { Injectable } from "@nestjs/common";
@@ -90,26 +90,40 @@ import { InjectClient, InjectMapper, BaseService } from "cassandra-orm4nest";
 import Device from "device.entity";
 
 @Injectable()
-export default class DeviceService extends BaseService<Device> { // 继承服务基类，服务基类提供了基本的CURD方法
+export default class DeviceService extends BaseService<Device> {
     constructor(
-        @InjectMapper(Device) private readonly mapper,
-        @InjectClient() client: Client
+        @InjectMapper(Device) private readonly mapper, // inject mapper object
+        @InjectClient() client: Client // inject cassandra connection client
     ) {
-        super(client, mapper, Device); // 父类构造
+        super(client, mapper, Device); // inherit the parent class constructor
     }
 }
 ```
 
-### `controller`层使用
+As you can see, we can extend the `BaseService` class that implements the basic CRUD methods, includes:
 
-直接在构造函数中注入服务类即可。
+* `saveOne`: Save a single entity.
+* `saveMany`: Save multiple entities.
+* `finadAll`: Query the full table, it is quivalent to the `findAll` method in the `ModelMapper` class in `cassandra-driver`, there is a limit on the number of results for a single query, default is 5000.
+* `findRealAll`: Query the full table, unlike `findAll`, there is no limit on the number of results for a single query, because it will converted to `eachRow` method to perform query operations.
+* `findMany`: Query based on conditions, it is quivalent to the `find` method in the `ModelMapper` class in `cassandra-driver`, there is a limit on the number of results for a single query, default is 5000.
+* `findRealMany`:  Query based on conditions, unlike `findMany`, there is no limit on the number of results for a single query, because it will converted to `eachRow` method to perform query operations.
+* `findOne`: : Query based on conditions, return the first item that meets the condition.
+* `update`: Update based on conditions, it is quivalent to the `update` method in the `ModelMapper` class in `cassandra-driver`.
+* `updateMany`: Perform multiple conditional update operations.
+* `remove`: Remove based on conditions, it is quivalent to the `remove` method in the `ModelMapper` class in `cassandra-driver`.
+* `removeMany`: Perform multiple conditional remove operations.
+
+### Usage In Controller
+
+Inject service directly into the control layer:
 
 ```typescript
 // device.controller.ts
 import DeviceService from "device.service"
 export default class DeviceController {
     constructor(
-        private readonly deviceService: DeviceService // 直接注入
+        private readonly deviceService: DeviceService // inject
     ){}
 
     @Get('doSomthing')
@@ -119,24 +133,24 @@ export default class DeviceController {
 }
 ```
 
-## 运行测试
+## Test Demo
 
-导入`test/schema.cql`至数据库：
+There is a demo in test folder.
+
+Import schema:
 
 ```bash
-cqlsh <host> -u <username> -p <password> < schema.cql
+ cqlsh <host> -u <username> -p <password> < test/schema.cql
 ```
 
-启动测试接口：
+Run test server:
 
 ```bash
 npm run test
 ```
 
-访问连接：
+Access URL in the browser:
 
 ```bash
 http://localhost:30000/device/doSomthing
 ```
-
-> 完整见`test`下示例
