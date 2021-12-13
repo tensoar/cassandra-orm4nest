@@ -84,17 +84,17 @@ export default class OrmTestModule {}
 * 提供了`@InjectMapper`注解用于注入实体的`mapper`对象，得到的`mapper`对象类型为`cassandra-driver`中`mapping.ModelMapper`对象。
 * 提供了`@InjectClient`注解可直接注入`cassandra`的连接客户端对象，类型为`cassandra`中的`Client`对象。
 * 提供了`BaseService`服务基类，可直接被实体的服务类继承，提供了基本的`CURD`方法，包括：
-    - `saveOne`: 保存单个实体
-    - `saveMany`: 保存多个实体
-    - `finadAll`: 查询全表，直接暴露的`ModelMapper`的`findAll`，受`cassandra-driver`默认查询条数的限制，默认只返回前`5000`条。
-    - `findRealAll`: 查询全表，返回全部数据，通过`eachRow`进行查询，不受默认条数限制。
-    - `findMany`: 批量条件查询，与`findAll`情况一致，受默认条数限制。
-    - `findRealMany`: 批量条件查询，与`findRealAll`情况一致，不受默认条数限制。
-    - `findOne`: 条件查询第一条。
-    - `update`: 常规条件更新
-    - `updateMany`: 批量条件更新，一次执行多个条件更新
-    - `remove`: 常规条件移除
-    - `removeMany`: 批量条件删除，一次执行多个条件
+  * `saveOne`: 保存单个实体
+  * `saveMany`: 保存多个实体
+  * `finadAll`: 查询全表，直接暴露的`ModelMapper`的`findAll`，受`cassandra-driver`默认查询条数的限制，默认只返回前`5000`条。
+  * `findRealAll`: 查询全表，返回全部数据，通过`eachRow`进行查询，不受默认条数限制。
+  * `findMany`: 批量条件查询，与`findAll`情况一致，受默认条数限制。
+  * `findRealMany`: 批量条件查询，与`findRealAll`情况一致，不受默认条数限制。
+  * `findOne`: 条件查询第一条。
+  * `update`: 常规条件更新
+  * `updateMany`: 批量条件更新，一次执行多个条件更新
+  * `remove`: 常规条件移除
+  * `removeMany`: 批量条件删除，一次执行多个条件
 
 ```typescript
 import { Injectable } from "@nestjs/common";
