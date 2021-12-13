@@ -28,32 +28,32 @@ export default class DeviceController {
         device2.isOnline = true;
         device2.version = "v1";
 
-        console.log('----------< saveMany >-----------');
+        console.log('----------< Save Many >-----------');
         await this.deviceService.saveMany([device1, device2]);
 
-        console.log('----------< findAll >---_--------');
+        console.log('----------< Find All >---_--------');
         const allDevices = await this.deviceService.findAll();
-        assert(allDevices.length == 2, 'assert saveMany');
+        assert(allDevices.length === 2, 'assert saveMany');
 
-        console.log('--------< findRealAll >-----------');
+        console.log('--------< Find Real All >-----------');
         const allRealDevices = await this.deviceService.findRealAll();
-        assert(allRealDevices.length == 2, 'assert findRealAll');
+        assert(allRealDevices.length === 2, 'assert findRealAll');
 
-        console.log('---------< findMany >------------');
+        console.log('---------< Find Many >------------');
         const devs1 = await this.deviceService.findMany({serialNumber: 'dev1', createTime: q.lte(device1.createTime)});
-        assert(devs1.length == 1 && devs1[0].serialNumber == 'dev1', 'assert findMany');
+        assert(devs1.length === 1 && devs1[0].serialNumber == 'dev1', 'assert findMany');
 
-        console.log('--------< findRealMany >-----------');
+        console.log('--------< Find Real Many >-----------');
         const devs2 = await this.deviceService.findRealMany({serialNumber: 'dev2', createTime: q.gte(device2.createTime)});
-        assert(devs2.length == 1 && devs2[0].serialNumber == 'dev2', 'assert findRealMany');
+        assert(devs2.length === 1 && devs2[0].serialNumber === 'dev2', 'assert findRealMany');
 
-        console.log('----------update-----------');
+        console.log('-----------< Update >--------------');
         const dev2 = devs2[0];
         dev2.version = 'v2';
         dev2.isOnline = !dev2.isOnline;
         await this.deviceService.update(dev2, {fields: ['serialNumber', 'createTime', 'version']});
         const v2New = await this.deviceService.findOne({serialNumber: 'dev2'});
-        assert(v2New.version == 'v2' && v2New.isOnline == true, 'assert update');
+        assert(v2New.version === 'v2' && v2New.isOnline === true, 'assert update');
 
         const dev1 = devs1[0];
         dev1.isOnline = false;
@@ -62,15 +62,23 @@ export default class DeviceController {
             docInfo: {fields: ['serialNumber', 'createTime', 'isOnline']} 
         }]);
         const dev1New = await this.deviceService.findOne({serialNumber: 'dev1'});
-        assert(dev1New.isOnline == false, 'assert updateMany');
+        assert(dev1New.isOnline === false, 'assert updateMany');
 
-        console.log('-----------< remove >-------------');
+        console.log('-----------< Remove >-------------');
         await this.deviceService.remove({serialNumber: 'dev1', createTime: q.gte(device1.createTime)});
-        assert((await this.deviceService.findAll()).length == 1, 'assert remove');
+        assert((await this.deviceService.findAll()).length === 1, 'assert remove');
 
-        console.log('---------< removeMany >-----------');
+        console.log('---------< Remove Many >-----------');
         await this.deviceService.removeMany([{value: {serialNumber: 'dev2', createTime: q.gte(device1.createTime)}}]);
-        assert((await this.deviceService.findAll()).length == 0, 'assert removeMany');
+        assert((await this.deviceService.findAll()).length === 0, 'assert removeMany');
+
+        console.log('---------< Map Delete >-----------');
+        await this.deviceService.saveMany([device1, device2]);
+        await this.deviceService.deleteBySerialNumber(device1.serialNumber);
+        assert((await this.deviceService.findAll()).length === 1, 'assert Map Delete');
+        await this.deviceService.deleteBySerialNumber(device2.serialNumber);
+        assert((await this.deviceService.findAll()).length === 0, 'assert Map Delete');
+
         return { msg: "all finished ..."};
     }
 }

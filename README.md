@@ -146,7 +146,7 @@ Import schema:
 Run test server:
 
 ```bash
-npm run test
+npm run test -- --host <db host> --username <db username> --password <db password> --datacenter <db datacenter>
 ```
 
 Access URL in the browser:

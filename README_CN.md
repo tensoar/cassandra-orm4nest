@@ -144,7 +144,7 @@ cqlsh <host> -u <username> -p <password> < schema.cql
 启动测试接口：
 
 ```bash
-npm run test
+npm run test -- --host <db host> --username <db username> --password <db password> --datacenter <db datacenter>
 ```
 
 访问连接：

@@ -1,6 +1,7 @@
 // cassandra-connection.module.ts
-import { DynamicModule, Global, Inject, Logger, Module } from "@nestjs/common";
+import { DynamicModule, Global, Logger, Module } from "@nestjs/common";
 import { Client, DseClientOptions } from "cassandra-driver";
+import { CASSANDRA_CLIENT_PROVIDER_NAME, DSE_CLIENT_OPTIONS_PROVIDER_NAME } from "../helper/constants.helper";
 
 @Global()
 @Module({})
@@ -14,12 +15,12 @@ export default class CassandraConnectionModule {
     static forRegister(options: DseClientOptions): DynamicModule {
         // 将数据库配置封装为提供者
         const DseClientOptionsProvider = {
-            provide: 'DseClientOptions',
+            provide: DSE_CLIENT_OPTIONS_PROVIDER_NAME,
             useValue: options
         };
         // 客户端提供者
         const CassandraClientProvider = {
-            provide: 'CassandraClient',
+            provide: CASSANDRA_CLIENT_PROVIDER_NAME,
             useFactory: async() => {
                 const client = new Client(options);
                 await client.connect().then(() => {

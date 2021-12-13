@@ -6,6 +6,7 @@ import * as QueryGenerator from "cassandra-driver/lib/mapping/query-generator"
 import * as DocInfoAdapter from "cassandra-driver/lib/mapping/doc-info-adapter";
 
 import MetadataStorageHelper, { ColumnMetadataOptions } from "../helper/metadata-storage.helper";
+import { ParamsHandler } from "lib/helper/types.helper";
 
 type EntityConditionOptions<T> = {[key in keyof T]?: T[key] | mapping.q.QueryOperator};
 
@@ -15,7 +16,7 @@ type EntityConditionOptions<T> = {[key in keyof T]?: T[key] | mapping.q.QueryOpe
 export default class BaseService<T> {
     // 类型追加_modelMappingInfos是因为在使用cassandra-driver实现的转换函数将实体描述转为原始cql语句时，映射
     // 信息须作为一个参数传入，映射信息是作为私有属性存在在mapper里的，ts层面无法展现，但运行时由于编译为js，没有私有属性概念，
-    // 可以直接获取，此处也是个妥协。
+    // 可以直接获取...
     private readonly _mapper: mapping.Mapper & {_modelMappingInfos: Map<string, any>};
     private readonly _client: Client;
     private readonly _Entity: any;
@@ -33,19 +34,6 @@ export default class BaseService<T> {
         this.tableName = Reflect.getMetadata('table', Entity) as string;
         this.columnMetas = MetadataStorageHelper.getColumMetadatasOfClass(Entity.name);
         this.modelMapper = mapper.forModel(this.tableName);
-    }
-
-    /**
-     * 
-     * @param row 数据库记录，将数据库记录转为实体
-     * @returns {T}
-     */
-    protected row2entity(row: Iterable<{[key: string]: any}> | types.Row): T {
-        const entity = new this._Entity();
-        for (let meta of this.columnMetas) {
-            entity[meta.propertyName] = row[meta.dbName];
-        }
-        return entity;
     }
 
     async saveOne(entity: T, docInfo?: mapping.InsertDocInfo, execOptions?: mapping.MappingExecutionOptions) {
@@ -131,6 +119,31 @@ export default class BaseService<T> {
         return result.toArray();
     }
 
+    protected mapCqlAsExecution (cql: string, paramsHandler?: ParamsHandler<T>, executionOptions?: QueryOptions) {
+        if (paramsHandler !== null && paramsHandler !== undefined && typeof paramsHandler !== 'function') {
+            throw new Error('paramsHandler must be null or function ...');
+        } else {
+            paramsHandler = (params?: Partial<T>) => this.defaultParamsHandler(params);
+        }
+        return (params?: Partial<T>) => {
+            const realParams = paramsHandler(params);
+            return this._client.execute(cql, realParams, executionOptions);
+        };
+    }
+
+    protected defaultParamsHandler(params: Partial<T>) {
+        const realParams: Record<string, any> = {};
+        for (const key of Object.keys(params)) {
+            const meta = this.columnMetas.find(m => m.propertyName === key);
+            if (meta) {
+                realParams[meta.dbName] = params[key];
+            } else {
+                realParams[key] = params[key];
+            }
+        }
+        return realParams;
+    }
+
     /**
      * 用eachRow查询所有记录，由于此方法直接执行的cql语句，因此在使用时需要进行属性名到数据库记录名的转换
      * @param {string} cql cql语句
@@ -191,5 +204,18 @@ export default class BaseService<T> {
             cql: QueryGenerator.getSelect(this.tableName, this.keyspaceName, propertiesInfo, fieldsInfo, orders, limit),
             params: QueryGenerator.selectParamsGetter(propertiesInfo, limit)(conditions, docInfo, mappingInfo)
         };
+    }
+    
+    /**
+     * 将数据库记录转为实体
+     * @param row 数据库记录
+     * @returns {T}
+     */
+     protected row2entity(row: Iterable<{[key: string]: any}> | types.Row): T {
+        const entity = new this._Entity();
+        for (let meta of this.columnMetas) {
+            entity[meta.propertyName] = row[meta.dbName];
+        }
+        return entity;
     }
 }
