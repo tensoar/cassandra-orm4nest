@@ -1,5 +1,9 @@
 # cassandra-orm4nest
 
+[![NPM version](https://img.shields.io/npm/v/cassandra-orm4nest.svg?style=flat)](https://www.npmjs.com/package/cassandra-orm4nest)
+[![NPM monthly downloads](https://img.shields.io/npm/dm/cassandra-orm4nest.svg?style=flat)](https://npmjs.org/package/cassandra-orm4nest)
+[![NPM total downloads](https://img.shields.io/npm/dt/cassandra-orm4nest.svg?style=flat)](https://npmjs.org/package/cassandra-orm4nest)
+
 Cassandra ORM wrapper for nestjs based on `cassandra-driver` package.
 
 [中文说明](./README_CN.md)
