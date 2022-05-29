@@ -20,9 +20,9 @@
   "devDependencies": {
     "@nestjs/platform-express": "^8.x",
     "@types/minimist": "^1.2.x",
-    "@types/node": "^14.x",
+    "@types/node": "^16.x",
     "minimist": "^1.2.x",
-    "typescript": "^4.5.x"
+    "typescript": "^4.7.x"
   },
   "peerDependencies": {
     "@nestjs/common": "^8.x",
