@@ -20,13 +20,17 @@ let DeviceService = class DeviceService extends lib_1.BaseService {
     constructor(mapper, client) {
         super(client, mapper, device_entity_1.default);
         this.mapper = mapper;
+        this.execDeleteByDeviceNumber = this.mapCqlAsExecution('delete from wt_test.device where serial_number = :serial_number');
+    }
+    async deleteBySerialNumber(serialNumber) {
+        return this.execDeleteByDeviceNumber({ serialNumber });
     }
 };
 DeviceService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, lib_1.InjectMapper)(device_entity_1.default)),
     __param(1, (0, lib_1.InjectClient)()),
-    __metadata("design:paramtypes", [Object, cassandra_driver_1.Client])
+    __metadata("design:paramtypes", [cassandra_driver_1.mapping.Mapper, cassandra_driver_1.Client])
 ], DeviceService);
 exports.default = DeviceService;
 //# sourceMappingURL=device.service.js.map

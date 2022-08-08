@@ -24,7 +24,7 @@ OrmTestModule = __decorate([
                 localDataCenter: env_util_1.default.datacenter
             }),
             lib_1.CassandraOrmModule.forFeature([
-                device_entity_1.default
+                device_entity_1.default,
             ])
         ],
         controllers: [device_controller_1.default],
