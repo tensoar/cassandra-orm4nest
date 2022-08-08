@@ -119,6 +119,17 @@ export default class BaseService<T> {
         return result.toArray();
     }
 
+    /**
+     * delete use origin cql
+     * @param conditions delete conditions
+     * @param docInfo remove doc info
+     * @returns result set
+     */
+    async delete(conditions: EntityConditionOptions<T>, docInfo?: mapping.RemoveDocInfo) {
+        const {cql, params} = await this.makeDeleteCqlAndParams(conditions, docInfo);
+        return this._client.execute(cql, params);
+    }
+
     protected mapCqlAsExecution (cql: string, paramsHandler?: ParamsHandler<T>, executionOptions?: QueryOptions) {
         if (paramsHandler !== null && paramsHandler !== undefined && typeof paramsHandler !== 'function') {
             throw new Error('paramsHandler must be null or function ...');
@@ -203,6 +214,19 @@ export default class BaseService<T> {
         return {
             cql: QueryGenerator.getSelect(this.tableName, this.keyspaceName, propertiesInfo, fieldsInfo, orders, limit),
             params: QueryGenerator.selectParamsGetter(propertiesInfo, limit)(conditions, docInfo, mappingInfo)
+        };
+    }
+
+    private async makeDeleteCqlAndParams(conditions: EntityConditionOptions<T>, docInfo?: mapping.RemoveDocInfo): Promise<{cql: string, params: any[]}> {
+        let query = `DELETE FROM ${this.keyspaceName}.${this.tableName} WHERE `;
+        const mappingInfo = this._mapper._modelMappingInfos.get(this.tableName);
+        const propertiesInfo = DocInfoAdapter.getPropertiesInfo(Object.keys(conditions), docInfo, conditions, mappingInfo);
+        query += QueryGenerator._getConditionWithOperators(propertiesInfo);
+        const tableMeta = await this._client.metadata.getTable(this.keyspaceName, this.tableName);
+        const primaryKeys = new Set(tableMeta.partitionKeys.concat(tableMeta.clusteringKeys).map(c => c.name));;
+        return {
+            cql: query,
+            params: QueryGenerator._deleteParamsGetter(primaryKeys, propertiesInfo, docInfo? docInfo.when || [] : [])(conditions, docInfo, mappingInfo)
         };
     }
     

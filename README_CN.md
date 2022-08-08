@@ -95,6 +95,7 @@ export default class OrmTestModule {}
   * `updateMany`: 批量条件更新，一次执行多个条件更新
   * `remove`: 常规条件移除
   * `removeMany`: 批量条件删除，一次执行多个条件
+  * `delete`: 转为原始`cql`命令后执行删除操作,相较于`remove`,可以不必写全所有主键
 
 ```typescript
 import { Injectable } from "@nestjs/common";

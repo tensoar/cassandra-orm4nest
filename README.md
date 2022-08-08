@@ -117,6 +117,7 @@ As you can see, we can extend the `BaseService` class that implements the basic 
 * `updateMany`: Perform multiple conditional update operations.
 * `remove`: Remove based on conditions, it is quivalent to the `remove` method in the `ModelMapper` class in `cassandra-driver`.
 * `removeMany`: Perform multiple conditional remove operations.
+* `delete`: delete use origin cql, can not write all primary keys
 
 ### Usage In Controller
 

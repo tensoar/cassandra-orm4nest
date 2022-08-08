@@ -11,7 +11,7 @@ const q = mapping.q;
 @Controller('device')
 export default class DeviceController {
     constructor(
-        private readonly deviceService: DeviceService
+        private readonly deviceService: DeviceService,
     ){}
 
     @Get('doSomthing')

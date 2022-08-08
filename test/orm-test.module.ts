@@ -16,7 +16,7 @@ import env from "./env.util";
             localDataCenter: env.datacenter
         }),
         CassandraOrmModule.forFeature([
-            Device
+            Device,
         ])
     ],
     controllers: [DeviceController],
