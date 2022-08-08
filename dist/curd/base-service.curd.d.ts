@@ -1,6 +1,6 @@
 import { Client, mapping, QueryOptions, types } from "cassandra-driver";
 import { ColumnMetadataOptions } from "../helper/metadata-storage.helper";
-import { ParamsHandler } from "lib/helper/types.helper";
+import { ParamsHandler } from "../helper/types.helper";
 declare type EntityConditionOptions<T> = {
     [key in keyof T]?: T[key] | mapping.q.QueryOperator;
 };

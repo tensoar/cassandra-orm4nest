@@ -6,7 +6,7 @@ import * as QueryGenerator from "cassandra-driver/lib/mapping/query-generator"
 import * as DocInfoAdapter from "cassandra-driver/lib/mapping/doc-info-adapter";
 
 import MetadataStorageHelper, { ColumnMetadataOptions } from "../helper/metadata-storage.helper";
-import { ParamsHandler } from "lib/helper/types.helper";
+import { ParamsHandler } from "../helper/types.helper";
 
 type EntityConditionOptions<T> = {[key in keyof T]?: T[key] | mapping.q.QueryOperator};
 
