@@ -9,14 +9,15 @@ var CassandraConnectionModule_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const cassandra_driver_1 = require("cassandra-driver");
+const constants_helper_1 = require("../helper/constants.helper");
 let CassandraConnectionModule = CassandraConnectionModule_1 = class CassandraConnectionModule {
     static forRegister(options) {
         const DseClientOptionsProvider = {
-            provide: 'DseClientOptions',
+            provide: constants_helper_1.DSE_CLIENT_OPTIONS_PROVIDER_NAME,
             useValue: options
         };
         const CassandraClientProvider = {
-            provide: 'CassandraClient',
+            provide: constants_helper_1.CASSANDRA_CLIENT_PROVIDER_NAME,
             useFactory: async () => {
                 const client = new cassandra_driver_1.Client(options);
                 await client.connect().then(() => {

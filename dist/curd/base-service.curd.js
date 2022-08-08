@@ -13,13 +13,6 @@ class BaseService {
         this.columnMetas = metadata_storage_helper_1.default.getColumMetadatasOfClass(Entity.name);
         this.modelMapper = mapper.forModel(this.tableName);
     }
-    row2entity(row) {
-        const entity = new this._Entity();
-        for (let meta of this.columnMetas) {
-            entity[meta.propertyName] = row[meta.dbName];
-        }
-        return entity;
-    }
     async saveOne(entity, docInfo, execOptions) {
         await this.modelMapper.insert(entity, docInfo, execOptions);
     }
@@ -74,6 +67,35 @@ class BaseService {
         const result = await this._mapper.batch(batches, execOptions);
         return result.toArray();
     }
+    async delete(conditions, docInfo) {
+        const { cql, params } = await this.makeDeleteCqlAndParams(conditions, docInfo);
+        return this._client.execute(cql, params);
+    }
+    mapCqlAsExecution(cql, paramsHandler, executionOptions) {
+        if (paramsHandler !== null && paramsHandler !== undefined && typeof paramsHandler !== 'function') {
+            throw new Error('paramsHandler must be null or function ...');
+        }
+        else {
+            paramsHandler = (params) => this.defaultParamsHandler(params);
+        }
+        return (params) => {
+            const realParams = paramsHandler(params);
+            return this._client.execute(cql, realParams, executionOptions);
+        };
+    }
+    defaultParamsHandler(params) {
+        const realParams = {};
+        for (const key of Object.keys(params)) {
+            const meta = this.columnMetas.find(m => m.propertyName === key);
+            if (meta) {
+                realParams[meta.dbName] = params[key];
+            }
+            else {
+                realParams[key] = params[key];
+            }
+        }
+        return realParams;
+    }
     findThroughEachRow(cql, params, options) {
         return new Promise((resolve, reject) => {
             const results = [];
@@ -117,6 +139,26 @@ class BaseService {
             cql: QueryGenerator.getSelect(this.tableName, this.keyspaceName, propertiesInfo, fieldsInfo, orders, limit),
             params: QueryGenerator.selectParamsGetter(propertiesInfo, limit)(conditions, docInfo, mappingInfo)
         };
+    }
+    async makeDeleteCqlAndParams(conditions, docInfo) {
+        let query = `DELETE FROM ${this.keyspaceName}.${this.tableName} WHERE `;
+        const mappingInfo = this._mapper._modelMappingInfos.get(this.tableName);
+        const propertiesInfo = DocInfoAdapter.getPropertiesInfo(Object.keys(conditions), docInfo, conditions, mappingInfo);
+        query += QueryGenerator._getConditionWithOperators(propertiesInfo);
+        const tableMeta = await this._client.metadata.getTable(this.keyspaceName, this.tableName);
+        const primaryKeys = new Set(tableMeta.partitionKeys.concat(tableMeta.clusteringKeys).map(c => c.name));
+        ;
+        return {
+            cql: query,
+            params: QueryGenerator._deleteParamsGetter(primaryKeys, propertiesInfo, docInfo ? docInfo.when || [] : [])(conditions, docInfo, mappingInfo)
+        };
+    }
+    row2entity(row) {
+        const entity = new this._Entity();
+        for (let meta of this.columnMetas) {
+            entity[meta.propertyName] = row[meta.dbName];
+        }
+        return entity;
     }
 }
 exports.default = BaseService;

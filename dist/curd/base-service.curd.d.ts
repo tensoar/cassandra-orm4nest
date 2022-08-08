@@ -1,5 +1,6 @@
 import { Client, mapping, QueryOptions, types } from "cassandra-driver";
 import { ColumnMetadataOptions } from "../helper/metadata-storage.helper";
+import { ParamsHandler } from "lib/helper/types.helper";
 declare type EntityConditionOptions<T> = {
     [key in keyof T]?: T[key] | mapping.q.QueryOperator;
 };
@@ -12,9 +13,6 @@ export default class BaseService<T> {
     protected readonly modelMapper: mapping.ModelMapper<T>;
     protected readonly columnMetas: ColumnMetadataOptions[];
     constructor(client: Client, mapper: mapping.Mapper, Entity: any);
-    protected row2entity(row: Iterable<{
-        [key: string]: any;
-    }> | types.Row): T;
     saveOne(entity: T, docInfo?: mapping.InsertDocInfo, execOptions?: mapping.MappingExecutionOptions): Promise<void>;
     saveMany(entities: T[], docInfo?: mapping.InsertDocInfo, execOptions?: mapping.MappingExecutionOptions): Promise<void>;
     findAll(docInfo?: mapping.FindDocInfo, execOptions?: mapping.MappingExecutionOptions): Promise<T[]>;
@@ -33,7 +31,14 @@ export default class BaseService<T> {
         value: EntityConditionOptions<T>;
         docInfo?: mapping.UpdateDocInfo;
     }>, execOptions?: mapping.MappingExecutionOptions): Promise<any[]>;
+    delete(conditions: EntityConditionOptions<T>, docInfo?: mapping.RemoveDocInfo): Promise<types.ResultSet>;
+    protected mapCqlAsExecution(cql: string, paramsHandler?: ParamsHandler<T>, executionOptions?: QueryOptions): (params?: Partial<T>) => Promise<types.ResultSet>;
+    protected defaultParamsHandler(params: Partial<T>): Record<string, any>;
     private findThroughEachRow;
     private makeQueryCqlAndParams;
+    private makeDeleteCqlAndParams;
+    protected row2entity(row: Iterable<{
+        [key: string]: any;
+    }> | types.Row): T;
 }
 export {};
