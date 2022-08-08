@@ -25,10 +25,10 @@
     "typescript": "^4.7.x"
   },
   "peerDependencies": {
-    "@nestjs/common": "^8.x",
-    "@nestjs/core": "^8.x",
+    "@nestjs/common": "*",
+    "@nestjs/core": "*",
     "cassandra-driver": "^4.x",
     "reflect-metadata": "*",
-    "rxjs": "^7.x"
+    "rxjs": "*"
   }
 }
