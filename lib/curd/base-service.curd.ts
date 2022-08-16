@@ -192,7 +192,7 @@ export default class BaseService<T> {
         const mappingInfo = this._mapper._modelMappingInfos.get(this.tableName);
         let propertiesInfo: Array<{columnName: string, value: any}> = [];
         if (conditions) {
-            propertiesInfo = DocInfoAdapter.getPropertiesInfo(Object.keys(conditions), docInfo, conditions, mappingInfo);
+            propertiesInfo = DocInfoAdapter.getPropertiesInfo(Object.keys(conditions), null, conditions, mappingInfo);
         }
         const fieldsInfo: Array<{columnName: string}> = [];
         if (docInfo && docInfo.fields) {

@@ -120,7 +120,7 @@ class BaseService {
         const mappingInfo = this._mapper._modelMappingInfos.get(this.tableName);
         let propertiesInfo = [];
         if (conditions) {
-            propertiesInfo = DocInfoAdapter.getPropertiesInfo(Object.keys(conditions), docInfo, conditions, mappingInfo);
+            propertiesInfo = DocInfoAdapter.getPropertiesInfo(Object.keys(conditions), null, conditions, mappingInfo);
         }
         const fieldsInfo = [];
         if (docInfo && docInfo.fields) {
