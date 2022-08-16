@@ -125,7 +125,7 @@ class BaseService {
         const fieldsInfo = [];
         if (docInfo && docInfo.fields) {
             for (let field of docInfo.fields) {
-                fieldsInfo.push(this.getDbNameOfProperty(field));
+                fieldsInfo.push({ columnName: this.getDbNameOfProperty(field) });
             }
         }
         const orders = [];

@@ -44,7 +44,7 @@ export default class DeviceController {
         assert(devs1.length === 1 && devs1[0].serialNumber == 'dev1', 'assert findMany');
 
         console.log('--------< Find Real Many >-----------');
-        const devs2 = await this.deviceService.findRealMany({serialNumber: 'dev2', createTime: q.gte(device2.createTime)});
+        const devs2 = await this.deviceService.findRealMany({serialNumber: 'dev2', createTime: q.gte(device2.createTime)}, {fields: ['serialNumber', 'createTime'],});
         assert(devs2.length === 1 && devs2[0].serialNumber === 'dev2', 'assert findRealMany');
 
         console.log('-----------< Update >--------------');

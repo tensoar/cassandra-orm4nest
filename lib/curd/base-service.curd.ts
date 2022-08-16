@@ -194,10 +194,10 @@ export default class BaseService<T> {
         if (conditions) {
             propertiesInfo = DocInfoAdapter.getPropertiesInfo(Object.keys(conditions), docInfo, conditions, mappingInfo);
         }
-        const fieldsInfo: string[] = [];
+        const fieldsInfo: Array<{columnName: string}> = [];
         if (docInfo && docInfo.fields) {
             for (let field of docInfo.fields) {
-                fieldsInfo.push(this.getDbNameOfProperty(field));
+                fieldsInfo.push({columnName: this.getDbNameOfProperty(field)});
             }
         }
 
