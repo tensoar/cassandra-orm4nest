@@ -1,6 +1,6 @@
 {
   "name": "cassandra-orm4nest",
-  "version": "0.1.11",
+  "version": "1.0.0",
   "description": "cassandra orm support for nest.js",
   "main": "dist/index.js",
   "author": "tensoar",

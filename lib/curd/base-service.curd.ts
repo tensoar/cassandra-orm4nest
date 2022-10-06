@@ -14,9 +14,6 @@ type EntityConditionOptions<T> = {[key in keyof T]?: T[key] | mapping.q.QueryOpe
  * 服务基类
  */
 export default class BaseService<T> {
-    // 类型追加_modelMappingInfos是因为在使用cassandra-driver实现的转换函数将实体描述转为原始cql语句时，映射
-    // 信息须作为一个参数传入，映射信息是作为私有属性存在在mapper里的，ts层面无法展现，但运行时由于编译为js，没有私有属性概念，
-    // 可以直接获取...
     private readonly _mapper: mapping.Mapper & {_modelMappingInfos: Map<string, any>};
     private readonly _client: Client;
     private readonly _Entity: any;
@@ -36,10 +33,28 @@ export default class BaseService<T> {
         this.modelMapper = mapper.forModel(this.tableName);
     }
 
+    /**
+     * 保存一个实体对象到数据库
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.ModelMapper/#insert
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/features/mapper/queries/#insert
+     * @param entity 实体对象
+     * @param docInfo 文档查询配置
+     * @param execOptions 执行配置
+     */
     async saveOne(entity: T, docInfo?: mapping.InsertDocInfo, execOptions?: mapping.MappingExecutionOptions) {
         await this.modelMapper.insert(entity, docInfo, execOptions);
     }
 
+     /**
+     * 批量保存多个实体对象到数据库
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.ModelMapper/#insert
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.Mapper/#batch
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/features/mapper/queries/#insert
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/entities/features/mapper/queries/#group-mutations-in-a-batch
+     * @param entities 实体对象数据
+     * @param docInfo 文档查询配置
+     * @param execOptions 执行配置
+     */
     async saveMany(entities: T[], docInfo?: mapping.InsertDocInfo, execOptions?: mapping.MappingExecutionOptions) {
         // 做批量时cassandra有大小限制,在配置文件的batch_size_fail_threshold_in_kb项中可以配置，默认50kb，超过设置大小会导致批量配置失败
         const batches = entities.map(entity => this.modelMapper.batching.insert(entity, docInfo));
@@ -49,6 +64,7 @@ export default class BaseService<T> {
     /**
      * 查询所有，需要注意的是由于cassandra-driver中mapper的机制，该方法不是返回的真正的全表数据，而是默认返回前5000条，
      * 表超过5000条记录时若要返回真正的全部数据，用findRealAll方法
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.ModelMapper/#find-all
      * @param docInfo 文档查询配置
      * @param execOptions 执行配置
      * @returns {T[]}
@@ -60,7 +76,8 @@ export default class BaseService<T> {
     /**
      * 条件查询，需要注意的是由于cassandra-driver中mapper的机制，数据查询有5000条的数据限制，查询结果超过5000条只返回前5000条，
      * 超过5000条记录时若要返回真正的全部数据，用findRealMany方法
-     * @param options 查询条件
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.ModelMapper/#find
+     * @param conditions 查询条件
      * @param docInfo 文档查询配置
      * @param execOptions 执行配置
      * @returns 
@@ -69,6 +86,14 @@ export default class BaseService<T> {
         return (await this.modelMapper.find(conditions, docInfo, execOptions)).toArray();
     }
 
+    /**
+     * 查询一条 limit 1
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.ModelMapper/#find
+     * @param conditions 查询条件
+     * @param docInfo 文档查询配置
+     * @param execOptions 执行配置
+     * @returns 
+     */
     async findOne(conditions: EntityConditionOptions<T>, docInfo?: mapping.FindDocInfo, execOptions?: mapping.MappingExecutionOptions) {
         const di: mapping.FindDocInfo = docInfo || {limit: 1};
         if (!di.limit) {
@@ -78,6 +103,11 @@ export default class BaseService<T> {
         return res.toArray()[0] || null;
     }
 
+    /**
+     * 根据实体属性名称获取对应的数据库字段名称
+     * @param propertyName 实体属性名称
+     * @returns 数据库字段名称
+     */
     private getDbNameOfProperty(propertyName: string) {
         const meta = this.columnMetas.find(m => m.propertyName === propertyName);
         if (!meta) {
@@ -86,33 +116,84 @@ export default class BaseService<T> {
         return meta.dbName;
     }
 
-
+    /**
+     * 条件查询,区别于findMany默认只返回前5000条,此方法会转换为eachRow方法查询,因此会返回所有结果
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/class.Client/#each-row
+     * @param conditions 查询条件
+     * @param docInfo 文档查询配置
+     * @param options 执行配置
+     * @returns 结果数组
+     */
     async findRealMany(conditions: EntityConditionOptions<T>, docInfo?: mapping.FindDocInfo, options?: QueryOptions): Promise<T[]> {  
         const cp =  this.makeQueryCqlAndParams(conditions, docInfo);
         return this.findThroughEachRow(cp.cql, cp.params, options);
     }
 
+    /**
+     * 查询全表,区别于findMany默认只返回前5000条,此方法会转换为eachRow方法查询,因此会返回所有结果
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/class.Client/#each-row
+     * @param docInfo 文档查询配置
+     * @param options 执行配置
+     * @returns 结果数组
+     */
     async findRealAll(docInfo?: mapping.FindDocInfo, options?: QueryOptions): Promise<T[]> {
         const cp =  this.makeQueryCqlAndParams(null, docInfo);
         return this.findThroughEachRow(cp.cql, cp.params, options);
     }
 
+    /**
+     * 执行更新操作,同cassandra-driver的update方法
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.ModelMapper/#update
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/features/mapper/queries/#update
+     * @param values 实体对象,会自动将主键作为条件,更新其它属性的值
+     * @param docInfo 文档查询配置
+     * @param execOptions 执行配置
+     * @returns 
+     */
     async update(values: EntityConditionOptions<T>, docInfo?: mapping.UpdateDocInfo, execOptions?: mapping.MappingExecutionOptions) {
         const result = await this.modelMapper.update(values, docInfo, execOptions);
         return result.toArray();
     }
 
+    /**
+     * 批量条件更新(batch)
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.ModelMapper/#update
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.Mapper/#batch
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/features/mapper/queries/#update
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/features/mapper/queries/#group-mutations-in-a-batch
+     * @param values 实体对象数据,会自动将主键作为条件,更新其它属性的值
+     * @param execOptions 文档查询配置
+     * @returns 
+     */
     async updateMany(values: Array<{value: EntityConditionOptions<T>, docInfo?: mapping.UpdateDocInfo}>, execOptions?: mapping.MappingExecutionOptions) {
         const batches = values.map(v => this.modelMapper.batching.update(v.value, v.docInfo || null));
         const result = await this._mapper.batch(batches, execOptions);
         return result.toArray();
     }
 
+    /**
+     * 删除操作,同同cassandra-driver的remove方法
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.ModelMapper/#remove
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/features/mapper/queries/#delete
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/features/mapper/queries/#group-mutations-in-a-batch
+     * @param values 实体对象数据,会自动将主键作为条件
+     * @param docInfo 文档查询配置
+     * @param execOptions 执行配置
+     * @returns 
+     */
     async remove(values: EntityConditionOptions<T>, docInfo?: mapping.UpdateDocInfo, execOptions?: mapping.MappingExecutionOptions) {
         const result = await this.modelMapper.remove(values, docInfo, execOptions);
         return result.toArray();
     }
 
+    /**
+     * 批量删除(batch)
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.ModelMapper/#remove
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/module.mapping/class.Mapper/#batch
+     * @param values 实体对象数据,会自动将主键作为条件
+     * @param execOptions 执行配置
+     * @returns 
+     */
     async removeMany(values: Array<{value:  EntityConditionOptions<T>, docInfo?: mapping.UpdateDocInfo}>, execOptions?: mapping.MappingExecutionOptions) {
         const batches = values.map(v => this.modelMapper.batching.remove(v.value, v.docInfo || null));
         const result = await this._mapper.batch(batches, execOptions);
@@ -120,16 +201,24 @@ export default class BaseService<T> {
     }
 
     /**
-     * delete use origin cql
-     * @param conditions delete conditions
-     * @param docInfo remove doc info
-     * @returns result set
+     * 删除,不同于remove,会转换为原生的cql语句去执行
+     * @see https://docs.datastax.com/en/developer/nodejs-driver/latest/api/class.Client/#execute
+     * @param conditions 删除条件
+     * @param docInfo 文档查询配置
+     * @returns
      */
     async delete(conditions: EntityConditionOptions<T>, docInfo?: mapping.RemoveDocInfo) {
         const {cql, params} = await this.makeDeleteCqlAndParams(conditions, docInfo);
         return this._client.execute(cql, params);
     }
 
+    /**
+     * 将cql语句映射为可执行函数
+     * @param cql cql语句
+     * @param paramsHandler 参数处理器
+     * @param executionOptions 执行配置
+     * @returns 可执行函数
+     */
     protected mapCqlAsExecution (cql: string, paramsHandler?: ParamsHandler<T>, executionOptions?: QueryOptions) {
         if (paramsHandler !== null && paramsHandler !== undefined && typeof paramsHandler !== 'function') {
             throw new Error('paramsHandler must be null or function ...');
