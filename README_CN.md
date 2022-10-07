@@ -155,3 +155,7 @@ http://localhost:30000/device/doSomthing
 ```
 
 > 完整见`test`下示例
+
+## 致谢
+
+* JetBrains提供免费的开源许可证

@@ -159,3 +159,7 @@ Access URL in the browser:
 ```bash
 http://localhost:30000/device/doSomthing
 ```
+
+## Thanks
+
+* JetBrains for free open source licenses
