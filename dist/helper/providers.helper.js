@@ -34,6 +34,7 @@ function getMapperProviders(Entities) {
                     if (meta.toModel) {
                         colInfo['toModel'] = meta.toModel;
                     }
+                    columns[meta.dbName] = colInfo;
                 }
             }
             const mappingOptions = {
@@ -41,7 +42,7 @@ function getMapperProviders(Entities) {
                     [tableName]: {
                         keyspace,
                         tables: [tableName],
-                        columns,
+                        columns: columns,
                         mappings: new cassandra_driver_1.mapping.UnderscoreCqlToCamelCaseMappings(),
                     }
                 }
