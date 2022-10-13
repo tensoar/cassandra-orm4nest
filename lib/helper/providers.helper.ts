@@ -1,6 +1,7 @@
 // provider.helper.ts
 import { Client, mapping } from "cassandra-driver";
 import MetadataStorageHelper from "./metadata-storage.helper";
+import { ModelColumnOptions } from "./types.helper";
 
 /**
  * 获取实体类对应的mapper的注入名称
@@ -25,12 +26,12 @@ export function getMapperProviders(Entities: ObjectConstructor[]) {
             // 拿出实体中所有属性的元数据
             const columnMetas = MetadataStorageHelper.getColumMetadatasOfClass(Entity.name);
             // 数据库中列名与实体中列名的对应关系
-            const columns: {[key: string]: string} = {};
+            const columns: {[key: string]: string | ModelColumnOptions} = {};
             for (let meta of columnMetas) {
                 if (!meta.fromModel && !meta.isJonStr && !meta.toModel) {
                     columns[meta.dbName] = meta.propertyName;
                 } else {
-                    const colInfo = {
+                    const colInfo: ModelColumnOptions = {
                         name: meta.propertyName,
                     }
                     if (meta.isJonStr) {
@@ -43,6 +44,7 @@ export function getMapperProviders(Entities: ObjectConstructor[]) {
                     if (meta.toModel) {
                         colInfo['toModel'] = meta.toModel;
                     }
+                    columns[meta.dbName] = colInfo;
                 }
             }
             const mappingOptions = {
@@ -50,7 +52,7 @@ export function getMapperProviders(Entities: ObjectConstructor[]) {
                     [tableName]: {
                         keyspace,
                         tables: [tableName],
-                        columns, // 映射规则优先于mappings
+                        columns: columns, // 映射规则优先于mappings
                         mappings: new mapping.UnderscoreCqlToCamelCaseMappings(),  // 字段映射方式，数据库中下划线的命名方式会映射为对象中的驼峰命名方式
                     }
                 }
