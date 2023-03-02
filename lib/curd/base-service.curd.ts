@@ -1,7 +1,6 @@
 // base-service.curd.ts
 
 import { Client, mapping, QueryOptions, types } from "cassandra-driver";
-// cassandra-driver内部实现的cql语句生成函数,默认没有导出，因此需要完整路径导入
 import * as QueryGenerator from "cassandra-driver/lib/mapping/query-generator"
 import * as DocInfoAdapter from "cassandra-driver/lib/mapping/doc-info-adapter";
 
@@ -297,9 +296,6 @@ export default class BaseService<T> {
             }
         }
         const limit = docInfo && docInfo.limit ? docInfo.limit : null;
-        // const p = QueryGenerator.selectParamsGetter(propertiesInfo, limit);
-        // const cql = QueryGenerator.getSelect(this.tableName, this.keyspaceName, propertiesInfo, fieldsInfo, orders, limit);
-        // console.log(p)
         return {
             cql: QueryGenerator.getSelect(this.tableName, this.keyspaceName, propertiesInfo, fieldsInfo, orders, limit),
             params: QueryGenerator.selectParamsGetter(propertiesInfo, limit)(conditions, docInfo, mappingInfo)

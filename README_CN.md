@@ -45,7 +45,6 @@ export default class Device {
 }
 ```
 
-
 ### `module`定义
 
 与`typeorm`实现类似，提供了`forRoot`方法配置数据库，`forFeature`方法注册实体。`forRoot`参数暴露的`cassandra-driver`连接选项，因而与`cassandra`的`Client`参数一致。
