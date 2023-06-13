@@ -7,3 +7,9 @@ export type ModelColumnOptions = {
     toModel?: (columnValue: any) => any;
     fromModel?: (modelValue: any) => any;
 };
+
+export type TypedFindDocInfo<E> = {
+    fields?: (keyof E)[],
+    orderBy?: {[key in keyof E]?: 'desc' | 'asc'},
+    limit?: number
+}

@@ -5,7 +5,7 @@ import * as QueryGenerator from "cassandra-driver/lib/mapping/query-generator"
 import * as DocInfoAdapter from "cassandra-driver/lib/mapping/doc-info-adapter";
 
 import MetadataStorageHelper, { ColumnMetadataOptions } from "../helper/metadata-storage.helper";
-import { ParamsHandler } from "../helper/types.helper";
+import { ParamsHandler, TypedFindDocInfo } from "../helper/types.helper";
 
 type EntityConditionOptions<T> = {[key in keyof T]?: T[key] | mapping.q.QueryOperator};
 
@@ -68,8 +68,8 @@ export default class BaseService<T> {
      * @param execOptions 执行配置
      * @returns {T[]}
      */
-    async findAll(docInfo?: mapping.FindDocInfo, execOptions?: mapping.MappingExecutionOptions): Promise<T[]> {
-        return (await this.modelMapper.findAll(docInfo, execOptions)).toArray();
+    async findAll(docInfo?: TypedFindDocInfo<T>, execOptions?: mapping.MappingExecutionOptions): Promise<T[]> {
+        return (await this.modelMapper.findAll(docInfo as unknown as mapping.FindDocInfo, execOptions)).toArray();
     }
 
     /**
@@ -81,8 +81,8 @@ export default class BaseService<T> {
      * @param execOptions 执行配置
      * @returns 
      */
-    async findMany(conditions: EntityConditionOptions<T>, docInfo?: mapping.FindDocInfo, execOptions?: mapping.MappingExecutionOptions)  {
-        return (await this.modelMapper.find(conditions, docInfo, execOptions)).toArray();
+    async findMany(conditions: EntityConditionOptions<T>, docInfo?: TypedFindDocInfo<T>, execOptions?: mapping.MappingExecutionOptions)  {
+        return (await this.modelMapper.find(conditions, docInfo as unknown as mapping.FindDocInfo, execOptions)).toArray();
     }
 
     /**
@@ -93,12 +93,12 @@ export default class BaseService<T> {
      * @param execOptions 执行配置
      * @returns 
      */
-    async findOne(conditions: EntityConditionOptions<T>, docInfo?: mapping.FindDocInfo, execOptions?: mapping.MappingExecutionOptions) {
-        const di: mapping.FindDocInfo = docInfo || {limit: 1};
+    async findOne(conditions: EntityConditionOptions<T>, docInfo?: TypedFindDocInfo<T>, execOptions?: mapping.MappingExecutionOptions) {
+        const di: TypedFindDocInfo<T> = docInfo || {limit: 1};
         if (!di.limit) {
             di.limit = 1;
         }
-        const res = await this.modelMapper.find(conditions, di, execOptions);
+        const res = await this.modelMapper.find(conditions, di as unknown as mapping.FindDocInfo, execOptions);
         return res.toArray()[0] || null;
     }
 
@@ -123,8 +123,8 @@ export default class BaseService<T> {
      * @param options 执行配置
      * @returns 结果数组
      */
-    async findRealMany(conditions: EntityConditionOptions<T>, docInfo?: mapping.FindDocInfo, options?: QueryOptions): Promise<T[]> {  
-        const cp =  this.makeQueryCqlAndParams(conditions, docInfo);
+    async findRealMany(conditions: EntityConditionOptions<T>, docInfo?: TypedFindDocInfo<T>, options?: QueryOptions): Promise<T[]> {  
+        const cp =  this.makeQueryCqlAndParams(conditions, docInfo as unknown as mapping.FindDocInfo);
         return this.findThroughEachRow(cp.cql, cp.params, options);
     }
 
@@ -135,8 +135,8 @@ export default class BaseService<T> {
      * @param options 执行配置
      * @returns 结果数组
      */
-    async findRealAll(docInfo?: mapping.FindDocInfo, options?: QueryOptions): Promise<T[]> {
-        const cp =  this.makeQueryCqlAndParams(null, docInfo);
+    async findRealAll(docInfo?: TypedFindDocInfo<T>, options?: QueryOptions): Promise<T[]> {
+        const cp =  this.makeQueryCqlAndParams(null, docInfo  as unknown as mapping.FindDocInfo);
         return this.findThroughEachRow(cp.cql, cp.params, options);
     }
 
