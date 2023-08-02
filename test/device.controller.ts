@@ -76,8 +76,10 @@ export default class DeviceController {
         await this.deviceService.saveMany([device1, device2]);
         await this.deviceService.deleteBySerialNumber(device1.serialNumber);
         assert((await this.deviceService.findAll()).length === 1, 'assert Map Delete');
-        await this.deviceService.deleteBySerialNumber(device2.serialNumber);
-        assert((await this.deviceService.findAll()).length === 0, 'assert Map Delete');
+
+        console.log('---------< Delete >-------------')
+        await this.deviceService.delete({serialNumber: device2.serialNumber});
+        assert((await this.deviceService.findAll()).length === 0, 'assert Delete');
 
         return { msg: "all finished ..."};
     }

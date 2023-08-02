@@ -206,9 +206,9 @@ export default class BaseService<T> {
      * @param docInfo 文档查询配置
      * @returns
      */
-    async delete(conditions: EntityConditionOptions<T>, docInfo?: mapping.RemoveDocInfo) {
+    async delete(conditions: EntityConditionOptions<T>, docInfo?: mapping.RemoveDocInfo, options?: QueryOptions) {
         const {cql, params} = await this.makeDeleteCqlAndParams(conditions, docInfo);
-        return this._client.execute(cql, params);
+        return this._client.execute(cql, params, options || {prepare: true});
     }
 
     /**

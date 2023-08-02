@@ -1,6 +1,6 @@
 {
   "name": "cassandra-orm4nest",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "cassandra orm support for nest.js",
   "main": "dist/index.js",
   "author": "tensoar",
@@ -10,7 +10,8 @@
     "url": "https://github.com/tensoar/cassandra-orm4nest"
   },
   "scripts": {
-    "test": "npx ts-node test/test.server.ts"
+    "test": "npx ts-node test/test.server.ts",
+    "build": "npx tsc"
   },
   "keywords": [
     "cassandra",
