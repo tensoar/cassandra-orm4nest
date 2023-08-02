@@ -5,7 +5,7 @@ import * as QueryGenerator from "cassandra-driver/lib/mapping/query-generator"
 import * as DocInfoAdapter from "cassandra-driver/lib/mapping/doc-info-adapter";
 
 import MetadataStorageHelper, { ColumnMetadataOptions } from "../helper/metadata-storage.helper";
-import { ParamsHandler, TypedFindDocInfo } from "../helper/types.helper";
+import { ParamsHandler, TypedFindDocInfo, TypedInsertDocInfo } from "../helper/types.helper";
 
 type EntityConditionOptions<T> = {[key in keyof T]?: T[key] | mapping.q.QueryOperator};
 
@@ -40,8 +40,8 @@ export default class BaseService<T> {
      * @param docInfo 文档查询配置
      * @param execOptions 执行配置
      */
-    async saveOne(entity: T, docInfo?: mapping.InsertDocInfo, execOptions?: mapping.MappingExecutionOptions) {
-        await this.modelMapper.insert(entity, docInfo, execOptions);
+    async saveOne(entity: T, docInfo?: TypedInsertDocInfo<T>, execOptions?: mapping.MappingExecutionOptions) {
+        await this.modelMapper.insert(entity, docInfo as mapping.InsertDocInfo, execOptions);
     }
 
      /**
@@ -54,9 +54,9 @@ export default class BaseService<T> {
      * @param docInfo 文档查询配置
      * @param execOptions 执行配置
      */
-    async saveMany(entities: T[], docInfo?: mapping.InsertDocInfo, execOptions?: mapping.MappingExecutionOptions) {
+    async saveMany(entities: T[], docInfo?: TypedInsertDocInfo<T>, execOptions?: mapping.MappingExecutionOptions) {
         // 做批量时cassandra有大小限制,在配置文件的batch_size_fail_threshold_in_kb项中可以配置，默认50kb，超过设置大小会导致批量配置失败
-        const batches = entities.map(entity => this.modelMapper.batching.insert(entity, docInfo));
+        const batches = entities.map(entity => this.modelMapper.batching.insert(entity, docInfo as mapping.InsertDocInfo));
         await this._mapper.batch(batches, execOptions);
     }
 
