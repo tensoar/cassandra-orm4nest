@@ -12,3 +12,8 @@ export declare type TypedFindDocInfo<E> = {
     };
     limit?: number;
 };
+export declare type TypedInsertDocInfo<E> = {
+    fields?: (keyof E)[];
+    ttl?: number;
+    ifNotExists: boolean;
+};

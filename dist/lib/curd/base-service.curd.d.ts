@@ -1,6 +1,6 @@
 import { Client, mapping, QueryOptions, types } from "cassandra-driver";
 import { ColumnMetadataOptions } from "../helper/metadata-storage.helper";
-import { ParamsHandler, TypedFindDocInfo } from "../helper/types.helper";
+import { ParamsHandler, TypedFindDocInfo, TypedInsertDocInfo } from "../helper/types.helper";
 declare type EntityConditionOptions<T> = {
     [key in keyof T]?: T[key] | mapping.q.QueryOperator;
 };
@@ -13,8 +13,8 @@ export default class BaseService<T> {
     protected readonly modelMapper: mapping.ModelMapper<T>;
     protected readonly columnMetas: ColumnMetadataOptions[];
     constructor(client: Client, mapper: mapping.Mapper, Entity: any);
-    saveOne(entity: T, docInfo?: mapping.InsertDocInfo, execOptions?: mapping.MappingExecutionOptions): Promise<void>;
-    saveMany(entities: T[], docInfo?: mapping.InsertDocInfo, execOptions?: mapping.MappingExecutionOptions): Promise<void>;
+    saveOne(entity: T, docInfo?: TypedInsertDocInfo<T>, execOptions?: mapping.MappingExecutionOptions): Promise<void>;
+    saveMany(entities: T[], docInfo?: TypedInsertDocInfo<T>, execOptions?: mapping.MappingExecutionOptions): Promise<void>;
     findAll(docInfo?: TypedFindDocInfo<T>, execOptions?: mapping.MappingExecutionOptions): Promise<T[]>;
     findMany(conditions: EntityConditionOptions<T>, docInfo?: TypedFindDocInfo<T>, execOptions?: mapping.MappingExecutionOptions): Promise<T[]>;
     findOne(conditions: EntityConditionOptions<T>, docInfo?: TypedFindDocInfo<T>, execOptions?: mapping.MappingExecutionOptions): Promise<T>;
