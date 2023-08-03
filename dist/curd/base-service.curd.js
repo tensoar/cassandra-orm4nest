@@ -67,9 +67,9 @@ class BaseService {
         const result = await this._mapper.batch(batches, execOptions);
         return result.toArray();
     }
-    async delete(conditions, docInfo) {
+    async delete(conditions, docInfo, options) {
         const { cql, params } = await this.makeDeleteCqlAndParams(conditions, docInfo);
-        return this._client.execute(cql, params);
+        return this._client.execute(cql, params, options || { prepare: true });
     }
     mapCqlAsExecution(cql, paramsHandler, executionOptions) {
         if (paramsHandler !== null && paramsHandler !== undefined && typeof paramsHandler !== 'function') {

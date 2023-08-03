@@ -1,5 +1,4 @@
 // base-service.curd.ts
-
 import { Client, mapping, QueryOptions, types } from "cassandra-driver";
 import * as QueryGenerator from "cassandra-driver/lib/mapping/query-generator"
 import * as DocInfoAdapter from "cassandra-driver/lib/mapping/doc-info-adapter";
