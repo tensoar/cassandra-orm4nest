@@ -19,7 +19,7 @@
     "nestjs"
   ],
   "devDependencies": {
-    "@nestjs/platform-express": "^8.x",
+    "@nestjs/platform-express": "^10.x",
     "@types/minimist": "^1.2.x",
     "@types/node": "^16.x",
     "minimist": "^1.2.x",
