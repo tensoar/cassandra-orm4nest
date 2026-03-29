@@ -8,12 +8,11 @@
     "target": "es2017",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "rootDir": "./",
     "incremental": true
   },
   "include": [
     "lib/**/*",
-    "test",
   ],
   "exclude": [
     "node_modules",
