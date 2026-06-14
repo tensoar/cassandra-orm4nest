@@ -1,7 +1,9 @@
 // provider.helper.ts
 import { Client, mapping } from "cassandra-driver";
-import MetadataStorageHelper from "./metadata-storage.helper";
+import MetadataStorageHelper, { ColumnMetadataOptions } from "./metadata-storage.helper";
 import { ModelColumnOptions } from "./types.helper";
+import { CASSANDRA_COLUMN_METADATA, CASSANDRA_ENTITY_METADATA } from "../constants";
+import { EntityDecoratorOptions } from "../decorator/entity.decorator";
 
 /**
  * 获取实体类对应的mapper的注入名称
@@ -21,14 +23,16 @@ export function getMapperProviders(Entities: ObjectConstructor[]) {
         provide: getMapperInjectName(Entity),
         inject: ['CassandraClient'], // 注入cassandra客户端
         useFactory: (cassandraClient: Client) => {
-            const tableName = Reflect.getMetadata('table', Entity) as string;
-            const keyspace = Reflect.getMetadata('keyspace', Entity) as string;
+            const entityMata = Reflect.getMetadata(CASSANDRA_ENTITY_METADATA, Entity) as EntityDecoratorOptions;
+            const tableName = entityMata.table || Entity.name;
+            const keyspace =  entityMata.keyspace; //Reflect.getMetadata('keyspace', Entity) as string;
             // 拿出实体中所有属性的元数据
-            const columnMetas = MetadataStorageHelper.getColumMetadatasOfClass(Entity.name);
+            const columnMetas = Reflect.getMetadata(CASSANDRA_COLUMN_METADATA, Entity) as ColumnMetadataOptions;
+            // MetadataStorageHelper.getColumMetadatasOfClass(Entity.name);
             // 数据库中列名与实体中列名的对应关系
             const columns: {[key: string]: string | ModelColumnOptions} = {};
             for (let meta of columnMetas) {
-                if (!meta.fromModel && !meta.isJonStr && !meta.toModel) {
+                if (!meta.fromModel && !meta.toModel) {
                     columns[meta.dbName] = meta.propertyName;
                 } else {
                     const colInfo: ModelColumnOptions = {

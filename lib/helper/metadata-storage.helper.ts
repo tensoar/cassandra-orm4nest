@@ -61,6 +61,6 @@ export default class MetadataStorageHelper {
      */
     public static getColumMetadatasOfClass(className: string) {
         const key = this.getClassMetadataKey(className);
-        return this.metadatasMap.get(key);
+        return this.metadatasMap.get(key)!;
     }
 }

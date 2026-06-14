@@ -24,10 +24,10 @@ export default class CassandraConnectionModule {
             useFactory: async() => {
                 const client = new Client(options);
                 await client.connect().then(() => {
-                    Logger.log(`cassandra connected to contact point: ${options.contactPoints.join(',')}`, 'CassandraClient');
+                    Logger.log(`cassandra connected to contact point: ${(options.contactPoints || []).join(',')}`, 'CassandraClient');
                 }).catch(e => {
                     console.log(e);
-                    Logger.log(`connect to cassandra failed with contact point: ${options.contactPoints.join(',')}`, 'CassandraClient');
+                    Logger.log(`connect to cassandra failed with contact point: ${(options.contactPoints || []).join(',')}`, 'CassandraClient');
                 });
                 return client;
             }
